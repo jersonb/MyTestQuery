@@ -1,7 +1,66 @@
-﻿namespace MyTestQuery.Extension
+﻿using System.Data;
+
+namespace MyTestQuery.Extension
 {
     public static class Extensions
     {
+        public static void ToListAsync2<T>(this IQueryable<T> query)
+        {
+            var result = EntityFrameworkQueryableExtensions.ToListAsync(query).GetAwaiter().GetResult().ToArray();
+
+            var table = new DataTable(typeof(T).Name);
+
+            var header = result[0]
+                 .GetType()
+                 .GetProperties()
+                 .Where(x => x.CanWrite)
+                 .Select(x => (x.Name, x.PropertyType));
+
+            var columnNames = header.Select(x => x.Name);
+
+            foreach (var column in header)
+            {
+                table.Columns.Add(column.Name, column.PropertyType);
+            }
+
+            foreach (T item in result)
+            {
+                var dataRow = table.NewRow();
+
+                foreach (var column in columnNames)
+                {
+                    dataRow[column] = typeof(T).GetProperty(column).GetValue(item, null);
+                }
+                table.Rows.Add(dataRow);
+            }
+
+            Console.WriteLine($"|{string.Join("|", columnNames)}|");
+
+            foreach (DataRow row in table.Rows)
+            {
+                Console.WriteLine($"|{string.Join("|", columnNames.Select(column => row[column]))}|");
+            }
+        }
+
+        public static void ToListAsync3<T>(this IQueryable<T> query)
+        {
+            var result = EntityFrameworkQueryableExtensions.ToListAsync(query).GetAwaiter().GetResult().ToArray();
+
+            var header = result[0]
+                 .GetType()
+                 .GetProperties()
+                 .Where(x => x.CanWrite)
+                 .Select(x => (x.Name, x.PropertyType));
+
+            Console.WriteLine($"|{string.Join("|", header)}|");
+
+            foreach (T item in result)
+            {
+                var values = header.Select(column => typeof(T).GetProperty(column.Name).GetValue(item, null));
+                Console.WriteLine($"|{string.Join("|", values)}|");
+            }
+        }
+
         public static void ToListAsync<T>(this IQueryable<T> query)
         {
             ExecuteAsync(query, EntityFrameworkQueryableExtensions.ToListAsync(query));
