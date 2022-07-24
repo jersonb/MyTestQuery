@@ -19,9 +19,8 @@ namespace MyTestQuery.Extension
             var columnNames = header.Select(x => x.Name);
 
             foreach (var column in header)
-            {
                 table.Columns.Add(column.Name, column.PropertyType);
-            }
+            
 
             foreach (T item in result)
             {
@@ -45,18 +44,39 @@ namespace MyTestQuery.Extension
         public static void ToListAsync3<T>(this IQueryable<T> query)
         {
             var result = EntityFrameworkQueryableExtensions.ToListAsync(query).GetAwaiter().GetResult().ToArray();
+            NewMethod(result);
+        }
 
+        private static void NewMethod<T>(T[] result)
+        {
             var header = result[0]
-                 .GetType()
-                 .GetProperties()
-                 .Where(x => x.CanWrite)
-                 .Select(x => (x.Name, x.PropertyType));
-
-            Console.WriteLine($"|{string.Join("|", header)}|");
-
+                             .GetType()
+                             .GetProperties()
+                             .Where(x => x.CanWrite)
+                             .Select(x => (x.Name, x.PropertyType, sizeColumn: x.Name.Count() + x.PropertyType.Name.Count() + 3));
+            
+            Console.WriteLine($"|{string.Join("|", header.Select(x => $"{x.Name} ({x.PropertyType.Name})"))}|");
+            
             foreach (T item in result)
             {
-                var values = header.Select(column => typeof(T).GetProperty(column.Name).GetValue(item, null));
+                var values = new string[header.Count()];
+
+                var i = 0;
+                foreach (var column in header)
+                {
+                    var value = typeof(T).GetProperty(column.Name).GetValue(item, null);
+
+                    if (column.PropertyType.Namespace != "System")
+                        value = JsonSerializer.Serialize(value);
+
+                    var toPrint = value.ToString();
+                   
+                    if (toPrint.Count() > column.sizeColumn)
+                        toPrint = toPrint.Substring(0, column.sizeColumn);
+                    
+                    values[i++] = toPrint.PadRight(column.sizeColumn - (column.sizeColumn - toPrint.Length) / 2).PadLeft(column.sizeColumn);
+                }
+                
                 Console.WriteLine($"|{string.Join("|", values)}|");
             }
         }
