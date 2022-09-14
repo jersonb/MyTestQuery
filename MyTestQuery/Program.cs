@@ -12,6 +12,5 @@ var context = Extensions.CreateContext<ExemploContext>(optionsBuilder);
 context.AddRange(Exemplo.Exemplos);
 context.SaveChanges();
 
-var query = context.Exemplo;
+context.Exemplo.FirstOrDefaultAsync(x => x.Name == "teste1");
 
-query.ToListAsync();

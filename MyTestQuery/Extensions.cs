@@ -1,4 +1,6 @@
-﻿namespace MyTestQuery.Extension
+﻿using System.Linq.Expressions;
+
+namespace MyTestQuery.Extension
 {
     public static class Extensions
     {
@@ -7,6 +9,11 @@
             ExecuteAsync(query, EntityFrameworkQueryableExtensions.ToListAsync(query));
         }
 
+        public static void FirstOrDefaultAsync<T>(this IQueryable<T> query, Expression<Func<T,bool>> expression)
+        {
+            ExecuteAsync(query, EntityFrameworkQueryableExtensions.FirstOrDefaultAsync(query, expression));
+
+        }
         public static void FirstOrDefaultAsync<T>(this IQueryable<T> query)
         {
             ExecuteAsync(query, EntityFrameworkQueryableExtensions.FirstOrDefaultAsync(query));
